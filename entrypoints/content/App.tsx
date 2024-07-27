@@ -2,11 +2,16 @@ import React from "react"
 import { useMutation } from "@tanstack/react-query"
 import { scanPageInfo, PageInfo } from "@/lib/trackers"
 import { scanPageContext, PageContext } from "@/lib/context"
+import { processText } from "@/lib/chunky"
 
 interface Profile {
     page: {
         info: PageInfo
         context: PageContext
+        content: {
+          raw: string
+          chunks: string[]
+        }
     }
 }
 
@@ -15,7 +20,7 @@ export const App: React.FC = () => {
 
     const extract = useMutation({
         mutationFn: async (profile: Profile) => {
-            await fetch("http://localhost:5050/api/mutation", {
+            await fetch("http://localhost:5050/ingress", {
                 method: "POST",
                 body: JSON.stringify(profile)
             })
@@ -44,7 +49,20 @@ export const App: React.FC = () => {
         if (!pageLoaded) return
 
         Promise.all([scanPageInfo(), scanPageContext()]).then(([info, context]) => {
-            extract.mutate({ page: { info, context } })
+          const cleaned = [processText()]
+
+          console.log(cleaned)
+
+          extract.mutate({ 
+            page: {
+              info,
+              context,
+              content: {
+                raw: document.documentElement.outerHTML,
+                chunks: cleaned
+              }
+            }
+          })
         }).catch((err) => {
             console.error("FOUCAULT: Error scanning page:", err)
         })

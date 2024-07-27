@@ -4,6 +4,6 @@ import { defineConfig } from "wxt"
 export default defineConfig({
     modules: ["@wxt-dev/module-react"],
     manifest: {
-        permissions: ["storage", "tabs", "webRequest", "<all_urls>"]
+        permissions: ["storage", "tabs", "activeTab", "webRequest", "<all_urls>"]
     }
 })
