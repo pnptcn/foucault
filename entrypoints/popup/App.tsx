@@ -1,3 +1,4 @@
+import "../globals.css"
 import React from "react"
 import { Switch } from "@/components/ui/switch"
 import {
@@ -8,12 +9,11 @@ import {
     CardTitle
 } from "@/components/ui/card"
 
-function App() {
+export const App: React.FC = () => {
     const [active, setActive] = React.useState(false)
-    const [replaceInputs, setReplaceInputs] = React.useState(false)
 
     React.useEffect(() => {
-        browser.runtime.sendMessage({ message: { tweak: active } })
+        browser.runtime.sendMessage({ message: { foucault: active } })
     }, [active])
 
     return (

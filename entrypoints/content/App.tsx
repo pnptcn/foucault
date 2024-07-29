@@ -9,13 +9,14 @@ interface Profile {
         info: PageInfo
         context: PageContext
         content: {
-          raw: string
-          chunks: string[]
+            raw: string
+            chunks: string[]
         }
     }
 }
 
 export const App: React.FC = () => {
+    const [mineContent, setMineContent] = React.useState<boolean>(true)
     const [pageLoaded, setPageLoaded] = React.useState(false)
 
     const extract = useMutation({
@@ -49,20 +50,23 @@ export const App: React.FC = () => {
         if (!pageLoaded) return
 
         Promise.all([scanPageInfo(), scanPageContext()]).then(([info, context]) => {
-          const cleaned = [processText()]
+            if (mineContent) {
+                console.log("FOUCAULT: Mine content")
+                const cleaned = [processText()]
 
-          console.log(cleaned)
-
-          extract.mutate({ 
-            page: {
-              info,
-              context,
-              content: {
-                raw: document.documentElement.outerHTML,
-                chunks: cleaned
-              }
+                extract.mutate({
+                    page: {
+                        info,
+                        context,
+                        content: {
+                            raw: document.documentElement.outerHTML,
+                            chunks: cleaned
+                        }
+                    }
+                })
             }
-          })
+        }).then(() => {
+            console.log("FOUCAULT: Mine content done")
         }).catch((err) => {
             console.error("FOUCAULT: Error scanning page:", err)
         })

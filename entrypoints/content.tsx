@@ -17,8 +17,13 @@ export default defineContentScript({
             anchor: "body",
             append: "first",
             onMount: (container) => {
+                console.log("FOUCAULT: container", container)
+                const foucaultRoot = document.createElement("div")
+                foucaultRoot.id = "foucault-root"
+                container.appendChild(foucaultRoot)
+
                 const queryClient = new QueryClient()
-                const root = ReactDOM.createRoot(container)
+                const root = ReactDOM.createRoot(foucaultRoot)
 
                 root.render(
                     <QueryClientProvider client={queryClient}>
