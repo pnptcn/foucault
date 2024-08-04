@@ -16,6 +16,7 @@ interface Profile {
 }
 
 export const App: React.FC = () => {
+    const [mineContent, setMineContent] = React.useState<boolean>(true)
     const [pageLoaded, setPageLoaded] = React.useState(false)
 
     const extract = useMutation({

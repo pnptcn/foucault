@@ -1,9 +1,12 @@
 import { defineConfig } from "wxt"
+import react from "@vitejs/plugin-react"
 
 // See https://wxt.dev/api/config.html
 export default defineConfig({
-    modules: ["@wxt-dev/module-react"],
+    vite: () => ({
+        plugins: [react()]
+    }),
     manifest: {
-        permissions: ["storage", "tabs", "activeTab", "webRequest", "<all_urls>"]
+        permissions: ["storage", "tabs", "activeTab", "webRequest"]
     }
 })
