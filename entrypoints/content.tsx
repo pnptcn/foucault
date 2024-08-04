@@ -1,10 +1,7 @@
 import "./globals.css"
 import ReactDOM from "react-dom/client"
 import App from "./content/App.tsx"
-import {
-    QueryClient,
-    QueryClientProvider,
-} from "@tanstack/react-query"
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 
 export default defineContentScript({
     matches: ["*://*/*"],
@@ -29,10 +26,9 @@ export default defineContentScript({
             },
             onRemove: (root) => {
                 root?.unmount()
-            },
+            }
         })
 
         ui.mount()
     }
 })
-

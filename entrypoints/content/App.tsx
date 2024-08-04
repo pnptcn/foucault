@@ -9,8 +9,8 @@ interface Profile {
         info: PageInfo
         context: PageContext
         content: {
-          raw: string
-          chunks: string[]
+            raw: string
+            chunks: string[]
         }
     }
 }
@@ -48,29 +48,33 @@ export const App: React.FC = () => {
     React.useEffect(() => {
         if (!pageLoaded) return
 
-        Promise.all([scanPageInfo(), scanPageContext()]).then(([info, context]) => {
-          const cleaned = [processText()]
+        Promise.all([scanPageInfo(), scanPageContext()])
+            .then(([info, context]) => {
+                const cleaned = [processText()]
 
-          console.log(cleaned)
+                console.log(cleaned)
 
-          extract.mutate({ 
-            page: {
-              info,
-              context,
-              content: {
-                raw: document.documentElement.outerHTML,
-                chunks: cleaned
-              }
-            }
-          })
-        }).catch((err) => {
-            console.error("FOUCAULT: Error scanning page:", err)
-        })
+                extract.mutate({
+                    page: {
+                        info,
+                        context,
+                        content: {
+                            raw: document.body.textContent
+                                .split("\n")
+                                .map((line) => line.trim())
+                                .filter((line) => line.length > 0)
+                                .join("\n"),
+                            chunks: cleaned
+                        }
+                    }
+                })
+            })
+            .catch((err) => {
+                console.error("FOUCAULT: Error scanning page:", err)
+            })
     }, [pageLoaded])
 
-    return (
-        <div id="foucault"></div>
-    )
+    return <div id="foucault"></div>
 }
 
 export default App
