@@ -1,7 +1,8 @@
-import "./globals.css"
+import "@elastic/eui/dist/eui_theme_dark.css"
 import ReactDOM from "react-dom/client"
 import App from "./content/App.tsx"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import { EuiProvider } from "@elastic/eui"
 
 export default defineContentScript({
     matches: ["*://*/*"],
@@ -24,7 +25,9 @@ export default defineContentScript({
 
                 root.render(
                     <QueryClientProvider client={queryClient}>
-                        <App />
+                        <EuiProvider>
+                            <App />
+                        </EuiProvider>
                     </QueryClientProvider>
                 )
                 return root

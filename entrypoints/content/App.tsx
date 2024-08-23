@@ -1,8 +1,14 @@
-import React from "react"
+import React, { useState, useEffect } from "react"
 import { useMutation } from "@tanstack/react-query"
 import { scanPageInfo, PageInfo } from "@/lib/trackers"
 import { scanPageContext, PageContext } from "@/lib/context"
 import { processText } from "@/lib/chunky"
+import { Component as Command } from "@/components/command/Component"
+import { Settings } from "@/types/settings" // Make sure this type is correctly imported
+
+const defaultSettings: Settings = {
+    extractEntities: false
+}
 
 interface Profile {
     page: {
@@ -16,19 +22,40 @@ interface Profile {
 }
 
 export const App: React.FC = () => {
-    const [mineContent, setMineContent] = React.useState<boolean>(true)
     const [pageLoaded, setPageLoaded] = React.useState(false)
+    const [settings, setSettings] = useState<Settings>(defaultSettings)
 
     const extract = useMutation({
-        mutationFn: async (profile: Profile) => {
-            await fetch("http://localhost:5050/ingress", {
+        mutationFn: async (doc) => {
+            const formData = new FormData()
+
+            // Create a blob from the document and append it to the form data
+            const blob = new Blob([doc], { type: "text/html" }) // Adjust the type based on the document type
+            formData.append("files", blob, "document.html") // Adjust the filename based on the document type
+
+            await fetch("http://localhost:5055/ingress", {
                 method: "POST",
-                body: JSON.stringify(profile)
+                body: formData
             })
         }
     })
 
-    React.useEffect(() => {
+    useEffect(() => {
+        const loadSettings = async () => {
+            const result = await browser.storage.local.get("foucaultSettings")
+            if (result.foucaultSettings) {
+                setSettings(result.foucaultSettings)
+            } else {
+                // If no settings are found, initialize with default settings
+                await browser.storage.local.set({ foucaultSettings: defaultSettings })
+                setSettings(defaultSettings)
+            }
+        }
+
+        loadSettings()
+    }, [])
+
+    useEffect(() => {
         const handleLoad = () => {
             console.log("FOUCAULT: Page loaded")
             setPageLoaded(true)
@@ -46,36 +73,30 @@ export const App: React.FC = () => {
         }
     }, [])
 
-    React.useEffect(() => {
+    useEffect(() => {
         if (!pageLoaded) return
 
-        Promise.all([scanPageInfo(), scanPageContext()])
-            .then(([info, context]) => {
-                const cleaned = [processText()]
+        const processPage = async () => {
+            const [info, context] = await Promise.all([scanPageInfo(), scanPageContext()])
+            const cleaned = [processText()]
 
-                console.log(cleaned)
+            console.log(cleaned)
 
-                extract.mutate({
-                    page: {
-                        info,
-                        context,
-                        content: {
-                            raw: document.body.textContent
-                                .split("\n")
-                                .map((line) => line.trim())
-                                .filter((line) => line.length > 0)
-                                .join("\n"),
-                            chunks: cleaned
-                        }
-                    }
-                })
-            })
-            .catch((err) => {
+            extract.mutate(document.body.outerHTML)
+        }
+
+        if (settings.extractEntities) {
+            processPage().catch((err) => {
                 console.error("FOUCAULT: Error scanning page:", err)
             })
-    }, [pageLoaded])
+        }
+    }, [pageLoaded, settings])
 
-    return <div id="foucault"></div>
+    return (
+        <div id="foucault">
+            <Command />
+        </div>
+    )
 }
 
 export default App

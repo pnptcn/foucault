@@ -38,8 +38,8 @@ export default defineBackground(() => {
     )
 
     // Function to parse the response body
-    async function parseResponse(response) {
-        console.log("FOUCAULT", response)
+    async function parseResponse(response: Blob) {
+        console.log("FOUCAULT background parseResponse", response)
 
         const text = await response.text()
         try {
@@ -52,13 +52,16 @@ export default defineBackground(() => {
 
     browser?.webRequest?.onCompleted?.addListener(
         async (details) => {
-            console.log("FOUCAULT", details)
+            console.log("FOUCAULT background webRequest.onComplete details", details)
 
             if (details.type === "main_frame") {
-                const filter = browser.webRequest.filterResponseData(details.requestId)
-                let data = []
+                const filter = browser?.webRequest
+                if (!filter) return
 
-                filter.ondata = (event) => {
+                console.log("FOUCAULT background webRequest.onComplete filter", filter)
+                let data: BlobPart[] | undefined = []
+
+                filter.ondata = (event: { data: BlobPart }) => {
                     data.push(event.data)
                 }
 
@@ -68,8 +71,6 @@ export default defineBackground(() => {
 
                     if (parsedJSON) {
                         console.log("Intercepted JSON:", parsedJSON)
-                        // You can perform any operations on the JSON here
-                        // For example, you could send it to your content script:
                         browser.tabs.sendMessage(details.tabId, {
                             type: "interceptedJSON",
                             data: parsedJSON
@@ -86,27 +87,29 @@ export default defineBackground(() => {
     browser?.runtime?.onMessage?.addListener((message, sender, sendResponse) => {
         if (message.type === "SETTINGS_UPDATED") {
             currentSettings = message.settings
-            // Notify all content scripts about the settings change
             browser.tabs.query({}).then((tabs) => {
                 tabs.forEach((tab) => {
                     if (tab.id) {
-                        browser.tabs.sendMessage(tab.id, { type: "SETTINGS_UPDATED", settings: currentSettings })
+                        browser.tabs.sendMessage(tab.id, {
+                            type: "SETTINGS_UPDATED",
+                            settings: currentSettings
+                        })
                     }
                 })
             })
         }
 
-        if (message.type === "GET_SETTINGS") {
-            sendResponse()
-        }
+        if (message.type === "GET_SETTINGS") sendResponse()
 
         if (message.action === "getHeaders") {
-            return Promise.resolve({ requestHeaders, responseHeaders })
+            return Promise.resolve({
+                requestHeaders,
+                responseHeaders
+            })
         }
 
         if (message.type === "interceptedJSON") {
             console.log("Received intercepted JSON in content script:", message.data)
-            // You can manipulate the DOM or perform other actions here based on the JSON data
         }
     })
 })
